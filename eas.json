@@ -25,7 +25,10 @@
     "production": {
       "android": {
         "image": "latest",
-        "gradleCommand": ":app:bundleRelease"
+        "gradleCommand": ":app:bundleRelease",
+        "env": {
+          "FLUTTER_ROOT": "/home/expo/flutter"
+        }
       },
       "ios": {
         "buildConfiguration": "Release"

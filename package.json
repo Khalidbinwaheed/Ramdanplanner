@@ -1,0 +1,11 @@
+{
+  "name": "ramadan_planner",
+  "version": "1.0.0",
+  "description": "Ramadan Planner Flutter App",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "eas-build-pre-install": "git clone https://github.com/flutter/flutter.git -b stable /home/expo/flutter && /home/expo/flutter/bin/flutter doctor"
+  },
+  "author": "",
+  "license": "ISC"
+}
