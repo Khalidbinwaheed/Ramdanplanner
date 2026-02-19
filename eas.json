@@ -23,9 +23,8 @@
       }
     },
     "production": {
-      "image": "latest",
-      "distribution": "store",
       "android": {
+        "image": "latest",
         "gradleCommand": ":app:bundleRelease"
       },
       "ios": {
