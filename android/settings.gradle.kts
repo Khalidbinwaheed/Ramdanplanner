@@ -1,6 +1,11 @@
 pluginManagement {
     val flutterSdkPath =
         run {
+            if (System.getenv("EAS_BUILD") == "true") {
+                val flutterRoot = System.getenv("FLUTTER_ROOT")
+                if (flutterRoot != null) return@run flutterRoot
+            }
+
             val properties = java.util.Properties()
             val propertiesFile = file("local.properties")
             if (propertiesFile.exists()) {
