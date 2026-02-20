@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "227002185976",
+    "project_id": "ramadan-planner-khalid",
+    "storage_bucket": "ramadan-planner-khalid.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:227002185976:android:fbada92ee3da51b20fe30d",
+        "android_client_info": {
+          "package_name": "com.example.ramadan_planner"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsdox9RzJ8My6kVFzASPM4JfUzpscYuuo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

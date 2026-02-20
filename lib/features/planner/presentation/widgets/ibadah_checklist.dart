@@ -312,27 +312,38 @@ class _IbadahChecklistState extends State<IbadahChecklist> {
       child: Row(
         children: [
           // Fard Checkbox (Custom styled)
-          InkWell(
-            onTap: () => widget.onPrayerToggle(lowerKey, 'fard'),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isFardDone ? Icons.check_circle : Icons.circle_outlined,
-                  color: isFardDone
-                      ? Theme.of(context).primaryColor
-                      : Colors.grey,
-                  size: 24,
+          // Fard Checkbox (Custom styled)
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => widget.onPrayerToggle(lowerKey, 'fard'),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4.0,
+                  vertical: 4.0,
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  localizedName,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isFardDone ? Icons.check_circle : Icons.circle_outlined,
+                      color: isFardDone
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      localizedName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
           const Spacer(),
@@ -391,18 +402,38 @@ class _IbadahChecklistState extends State<IbadahChecklist> {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          InkWell(
-            onTap: () => onChanged(!isChecked),
-            child: Icon(
-              isChecked ? Icons.check_circle : Icons.circle_outlined,
-              color: isChecked ? Theme.of(context).primaryColor : Colors.grey,
-              size: 24,
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => onChanged(!isChecked),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4.0,
+                  vertical: 4.0,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isChecked ? Icons.check_circle : Icons.circle_outlined,
+                      color: isChecked
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           if (isCustom && onDelete != null) ...[
             const Spacer(),

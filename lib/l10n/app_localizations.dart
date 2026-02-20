@@ -681,6 +681,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Freedom'**
   String get ashra3Subtitle;
+
+  /// No description provided for @about.
+  ///
+  /// In en, this message translates to:
+  /// **'About App'**
+  String get about;
+
+  /// No description provided for @developer.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get developer;
+
+  /// No description provided for @company.
+  ///
+  /// In en, this message translates to:
+  /// **'Company'**
+  String get company;
+
+  /// No description provided for @appDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Ramadan Planner is your comprehensive spiritual companion designed to help you make the most of the holy month. Track your prayers, fasting, and daily ibadah with ease. Stay connected to your spiritual goals with features like Tasbih, Sadaqah tracking, and Quran reading logs. May this Ramadan be a source of barakah and growth for you.'**
+  String get appDescription;
+
+  /// No description provided for @version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get version;
 }
 
 class _AppLocalizationsDelegate

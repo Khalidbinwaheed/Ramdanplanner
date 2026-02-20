@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "ramadan_planner",
+    "slug": "ramadanplanner",
+    "version": "1.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "648deb57-d50c-44f1-8fb7-4e4aa86a8917"
+      }
+    },
+    "android": {
+      "package": "com.example.ramadan_planner",
+      "versionCode": 1
+    },
+    "ios": {
+      "bundleIdentifier": "com.example.ramadanPlanner",
+      "buildNumber": "1"
+    }
+  }
+}

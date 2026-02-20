@@ -306,4 +306,20 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get ashra3Subtitle => 'نجات';
+
+  @override
+  String get about => 'About App';
+
+  @override
+  String get developer => 'Developer';
+
+  @override
+  String get company => 'Company';
+
+  @override
+  String get appDescription =>
+      'Ramadan Planner is your comprehensive spiritual companion designed to help you make the most of the holy month. Track your prayers, fasting, and daily ibadah with ease. Stay connected to your spiritual goals with features like Tasbih, Sadaqah tracking, and Quran reading logs. May this Ramadan be a source of barakah and growth for you.';
+
+  @override
+  String get version => 'Version';
 }

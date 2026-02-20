@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:ramadan_planner/features/settings/settings_view_model.dart';
 import 'package:ramadan_planner/features/planner/presentation/providers/planner_view_model.dart';
 import 'package:ramadan_planner/l10n/app_localizations.dart';
+import 'package:ramadan_planner/features/settings/about_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -122,7 +123,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         if (mounted) {
           final messenger = ScaffoldMessenger.of(context);
           final l10n = AppLocalizations.of(context)!;
-          Navigator.pop(context); // Close settings
+          // Navigator.pop(context); // Removed: Settings is a tab, not a dialog
           messenger.showSnackBar(SnackBar(content: Text(l10n.settingsSaved)));
         }
       } catch (e) {
@@ -327,6 +328,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     )
                   : Text(l10n.save),
+            ),
+
+            const SizedBox(height: 24),
+
+            // About App
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              tileColor: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.info_outline,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              title: Text(
+                l10n.about,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              trailing: const Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.grey,
+                size: 16,
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AboutScreen()),
+                );
+              },
             ),
 
             const SizedBox(height: 24),
