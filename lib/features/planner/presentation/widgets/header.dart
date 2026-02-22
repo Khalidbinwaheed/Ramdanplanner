@@ -44,7 +44,7 @@ class RamadanHeader extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '${l10n.greeting} ${settings.userName ?? l10n.guestUser}',
+                        '${l10n.greeting}, ${settings.userName ?? l10n.guestUser}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

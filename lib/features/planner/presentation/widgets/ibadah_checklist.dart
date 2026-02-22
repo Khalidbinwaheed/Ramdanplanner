@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:ramadan_planner/features/planner/presentation/widgets/dua_list_dialog.dart';
 import 'package:ramadan_planner/l10n/app_localizations.dart';
 
 class IbadahChecklist extends StatefulWidget {
   final Map<String, List<String>> prayers;
   final bool fastKept;
   final bool taraweeh;
-  final bool istighfar1000x;
-  final bool
-  durood100x; // Kept for backward compatibility if needed, but we use counts now
-  final int istighfarCount;
-  final int duroodCount;
   final int subhanAllahCount;
-  final double sadaqahAmount;
   final Map<String, dynamic> tilawat;
   final Map<String, dynamic> dars;
   final Map<String, dynamic> adhkar;
@@ -25,12 +18,6 @@ class IbadahChecklist extends StatefulWidget {
   final Function(String, String) onPrayerToggle;
   final Function(bool) onFastingToggle;
   final Function(bool) onTaraweehChanged;
-  final Function(bool) onIstighfarToggle; // Kept if needed
-  final Function(bool) onDuroodToggle; // Kept if needed
-  final Function(int) onIstighfarCountChanged;
-  final Function(int) onDuroodCountChanged;
-  final Function(int) onSubhanAllahCountChanged;
-  final Function(double) onSadaqahChanged;
   final Function(bool) onSurahMulkChanged;
   final Function(String) onAddCustomItem;
   final Function(String) onRemoveCustomItem;
@@ -40,12 +27,7 @@ class IbadahChecklist extends StatefulWidget {
     required this.prayers,
     required this.fastKept,
     required this.taraweeh,
-    required this.istighfar1000x,
-    required this.durood100x,
-    required this.istighfarCount,
-    required this.duroodCount,
     required this.subhanAllahCount,
-    required this.sadaqahAmount,
     required this.currency,
     required this.tilawat,
     required this.dars,
@@ -55,12 +37,6 @@ class IbadahChecklist extends StatefulWidget {
     required this.onPrayerToggle,
     required this.onFastingToggle,
     required this.onTaraweehChanged,
-    required this.onIstighfarToggle,
-    required this.onDuroodToggle,
-    required this.onIstighfarCountChanged,
-    required this.onDuroodCountChanged,
-    required this.onSubhanAllahCountChanged,
-    required this.onSadaqahChanged,
     required this.onTilawatToggle,
     required this.onDarsToggle,
     required this.onAdhkarToggle,
@@ -181,47 +157,6 @@ class _IbadahChecklistState extends State<IbadahChecklist> {
 
           const SizedBox(height: 24),
 
-          // Counters
-          _buildCounterRow(
-            l10n.istighfar,
-            widget.istighfarCount,
-            1000, // Daily target could be dynamic
-            widget.onIstighfarCountChanged,
-            onInfoTap: () => _showDuaList(context, l10n.istighfar, [
-              "أَسْتَغْفِرُ اللَّهَ",
-              "أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ وَأَتُوبُ إِلَيْهِ",
-              "اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ...",
-            ]),
-          ),
-          const SizedBox(height: 8),
-          _buildCounterRow(
-            l10n.durood,
-            widget.duroodCount,
-            100,
-            widget.onDuroodCountChanged,
-            onInfoTap: () => _showDuaList(context, l10n.durood, [
-              "صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ",
-              "اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ...",
-              "جَزَى اللَّهُ عَنَّا مُحَمَّدًا مَا هُوَ أَهْلُهُ",
-            ]),
-          ),
-          const SizedBox(height: 8),
-          _buildCounterRow(
-            l10n.subhanAllah,
-            widget.subhanAllahCount,
-            100,
-            widget.onSubhanAllahCountChanged,
-            onInfoTap: () => _showDuaList(context, l10n.subhanAllah, [
-              "سُبْحَانَ اللَّهِ",
-              "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
-              "سُبْحَانَ اللَّهِ الْعَظِيمِ",
-            ]),
-          ),
-          const SizedBox(height: 8),
-          _buildSadaqahRow(l10n.sadaqah, widget.currency),
-
-          const SizedBox(height: 24),
-
           // Custom Item Input
           Row(
             children: [
@@ -270,19 +205,7 @@ class _IbadahChecklistState extends State<IbadahChecklist> {
             ...widget.customItems.map(
               (item) => _buildSimpleCheckRow(
                 item,
-                true, // Always checked initially? Or just a list item with delete?
-                // Design shows "Add Custom Item" input.
-                // Usually custom items in checklists are things you want to do.
-                // Let's show as checked/unchecked?
-                // The model `customItems` is a List<String>. It doesn't store state per day?
-                // Actually day_entry_model.dart says:
-                // List<String> customItems;
-                // It seems these are just strings.
-                // If they are in the list, does it mean they are DONE?
-                // Or is the list the DEFINITION of custom items for that day?
-                // Given "Add Custom Item" at the bottom, it implies adding to the DONE list or TODO list.
-                // Let's assume adding it adds to the list of things DONE/TRACKED.
-                // For now, I'll display them with a delete button.
+                true,
                 (val) {},
                 isCustom: true,
                 onDelete: () => widget.onRemoveCustomItem(item),
@@ -311,7 +234,6 @@ class _IbadahChecklistState extends State<IbadahChecklist> {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         children: [
-          // Fard Checkbox (Custom styled)
           // Fard Checkbox (Custom styled)
           Material(
             color: Colors.transparent,
@@ -443,115 +365,6 @@ class _IbadahChecklistState extends State<IbadahChecklist> {
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildCounterRow(
-    String label,
-    int value,
-    int target,
-    Function(int) onChanged, {
-    VoidCallback? onInfoTap,
-  }) {
-    return Row(
-      children: [
-        if (onInfoTap != null)
-          IconButton(
-            icon: const Icon(Icons.info_outline, size: 20, color: Colors.grey),
-            onPressed: onInfoTap,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        if (onInfoTap != null) const SizedBox(width: 8),
-        InkWell(
-          onTap: onInfoTap,
-          borderRadius: BorderRadius.circular(4),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-        Text(
-          ' / $target',
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-        ),
-        const Spacer(),
-        _buildCircleButton(
-          Icons.remove,
-          () => onChanged(value > 0 ? value - 1 : 0),
-        ),
-        SizedBox(
-          width: 50,
-          child: Text(
-            '$value',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
-              fontSize: 16,
-            ),
-          ),
-        ),
-        _buildCircleButton(Icons.add, () => onChanged(value + 1)),
-      ],
-    );
-  }
-
-  void _showDuaList(BuildContext context, String title, List<String> duas) {
-    showDialog(
-      context: context,
-      builder: (context) => DuaListDialog(title: title, duas: duas),
-    );
-  }
-
-  Widget _buildSadaqahRow(String label, String currency) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const Spacer(),
-        _buildCircleButton(Icons.remove, () {
-          if (widget.sadaqahAmount >= 10) {
-            widget.onSadaqahChanged(widget.sadaqahAmount - 10);
-          }
-        }),
-        SizedBox(
-          width: 80,
-          child: Text(
-            '$currency ${widget.sadaqahAmount.toInt()}',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
-              fontSize: 16,
-            ),
-          ),
-        ),
-        _buildCircleButton(
-          Icons.add,
-          () => widget.onSadaqahChanged(widget.sadaqahAmount + 10),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCircleButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white10,
-        ),
-        child: Icon(icon, size: 16, color: Colors.grey),
       ),
     );
   }

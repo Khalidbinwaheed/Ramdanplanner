@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ramadan_planner/features/planner/presentation/pages/dashboard_screen.dart';
-import 'package:ramadan_planner/features/planner/presentation/pages/duas_screen.dart';
-import 'package:ramadan_planner/features/planner/presentation/pages/analytics_screen.dart';
+import 'package:ramadan_planner/features/quran/presentation/pages/quran_screen.dart';
+import 'package:ramadan_planner/features/tasbeeh/tasbeeh_screen.dart';
+import 'package:ramadan_planner/features/routine/presentation/routine_screen.dart';
+import 'package:ramadan_planner/features/goals/presentation/goals_screen.dart';
 import 'package:ramadan_planner/features/settings/settings_screen.dart';
 
 final navigationIndexProvider = StateProvider<int>((ref) => 0);
@@ -22,12 +24,14 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
 
     final List<Widget> screens = [
       const DashboardScreen(),
-      const DuasScreen(),
-      const AnalyticsScreen(),
+      const QuranScreen(),
+      const TasbeehScreen(),
+      const RoutineScreen(),
+      const GoalsScreen(),
       const SettingsScreen(),
     ];
 
-    final destinations = const [
+    const destinations = [
       NavigationDestination(
         icon: Icon(Icons.dashboard_outlined),
         selectedIcon: Icon(Icons.dashboard),
@@ -36,12 +40,22 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
       NavigationDestination(
         icon: Icon(Icons.menu_book_outlined),
         selectedIcon: Icon(Icons.menu_book),
-        label: 'Duas',
+        label: 'Quran',
       ),
       NavigationDestination(
-        icon: Icon(Icons.analytics_outlined),
-        selectedIcon: Icon(Icons.analytics),
-        label: 'Analytics',
+        icon: Icon(Icons.fingerprint_outlined),
+        selectedIcon: Icon(Icons.fingerprint),
+        label: 'Tasbeeh',
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.checklist_outlined),
+        selectedIcon: Icon(Icons.checklist),
+        label: 'Routine',
+      ),
+      NavigationDestination(
+        icon: Icon(Icons.flag_outlined),
+        selectedIcon: Icon(Icons.flag),
+        label: 'Goals',
       ),
       NavigationDestination(
         icon: Icon(Icons.settings_outlined),
@@ -91,6 +105,7 @@ class _MainScaffoldState extends ConsumerState<MainScaffold> {
         onDestinationSelected: (val) =>
             ref.read(navigationIndexProvider.notifier).state = val,
         destinations: destinations,
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
       ),
     );
   }

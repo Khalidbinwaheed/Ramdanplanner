@@ -1,19 +1,19 @@
 {
   "expo": {
-    "name": "ramadan_planner",
+    "name": "Ramadan Planner",
     "slug": "ramadanplanner",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "extra": {
       "eas": {
         "projectId": "648deb57-d50c-44f1-8fb7-4e4aa86a8917"
       }
     },
     "android": {
-      "package": "com.example.ramadan_planner",
-      "versionCode": 1
+      "package": "com.codecryptical.ramadanplanner",
+      "versionCode": 3
     },
     "ios": {
-      "bundleIdentifier": "com.example.ramadanPlanner",
+      "bundleIdentifier": "com.codecryptical.ramadanplanner",
       "buildNumber": "1"
     }
   }

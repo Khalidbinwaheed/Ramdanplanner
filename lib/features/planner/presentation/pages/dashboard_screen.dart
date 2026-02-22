@@ -6,6 +6,8 @@ import 'package:ramadan_planner/features/planner/presentation/widgets/header.dar
 import 'package:ramadan_planner/features/planner/presentation/widgets/day_chips.dart';
 import 'package:ramadan_planner/features/planner/presentation/widgets/ashra_tabs.dart';
 import 'package:ramadan_planner/features/planner/presentation/widgets/ibadah_checklist.dart';
+import 'package:ramadan_planner/features/planner/presentation/widgets/dhikr_card.dart';
+import 'package:ramadan_planner/features/planner/presentation/widgets/sadaqah_card.dart';
 import 'package:ramadan_planner/features/planner/presentation/widgets/evening_reflection.dart';
 import 'package:ramadan_planner/features/planner/presentation/widgets/prayer_times_card.dart';
 import 'package:ramadan_planner/l10n/app_localizations.dart';
@@ -40,17 +42,30 @@ class DashboardScreen extends ConsumerWidget {
           onAshraSelected: (ashra) => viewModel.loadDay((ashra - 1) * 10 + 1),
         ),
         const SizedBox(height: 16),
+        const SizedBox(height: 16),
+        DhikrCard(
+          istighfarCount: entry.istighfarCount,
+          duroodCount: entry.duroodCount,
+          subhanAllahCount: entry.subhanAllahCount,
+          personalDuas: entry.personalDuas,
+          onIstighfarCountChanged: viewModel.updateIstighfarCount,
+          onDuroodCountChanged: viewModel.updateDuroodCount,
+          onSubhanAllahCountChanged: viewModel.updateSubhanAllahCount,
+          onAddPersonalDua: viewModel.addPersonalDua,
+          onDeletePersonalDua: viewModel.deletePersonalDua,
+          onToggleDuaAnswered: viewModel.toggleDuaAnswered,
+        ),
+        SadaqahCard(
+          amount: entry.sadaqahAmount,
+          currency: settings.currency,
+          onChanged: viewModel.setSadaqah,
+        ),
+        const SizedBox(height: 16),
         IbadahChecklist(
           prayers: entry.prayers,
           fastKept: entry.fastKept,
           taraweeh: entry.taraweeh,
-          istighfar1000x:
-              false, // Deprecated/Unused in new logic but kept for param
-          durood100x:
-              false, // Deprecated/Unused in new logic but kept for param
-          istighfarCount: entry.istighfarCount,
-          duroodCount: entry.duroodCount,
-          sadaqahAmount: entry.sadaqahAmount,
+          subhanAllahCount: entry.subhanAllahCount,
           currency: settings.currency,
           tilawat: entry.tilawat,
           dars: entry.dars,
@@ -60,13 +75,6 @@ class DashboardScreen extends ConsumerWidget {
           onPrayerToggle: viewModel.togglePrayer,
           onFastingToggle: viewModel.toggleFast,
           onTaraweehChanged: viewModel.toggleTaraweeh,
-          onIstighfarToggle: viewModel.toggleIstighfarGoal,
-          onDuroodToggle: viewModel.toggleDuroodGoal,
-          onIstighfarCountChanged: viewModel.updateIstighfarCount,
-          onDuroodCountChanged: viewModel.updateDuroodCount,
-          subhanAllahCount: entry.subhanAllahCount,
-          onSubhanAllahCountChanged: viewModel.updateSubhanAllahCount,
-          onSadaqahChanged: viewModel.setSadaqah,
           onTilawatToggle: viewModel.toggleTilawat,
           onDarsToggle: viewModel.toggleDars,
           onAdhkarToggle: viewModel.toggleAdhkar,
@@ -80,8 +88,7 @@ class DashboardScreen extends ConsumerWidget {
               viewModel.updateReflection(key, val),
         ),
         const SizedBox(height: 32),
-        // SadaqahCounter removed as it is now in DashboardStats
-        const _TasbihCounter(),
+        const SizedBox(height: 32),
         const SizedBox(height: 24),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -134,104 +141,12 @@ class DashboardScreen extends ConsumerWidget {
               viewModel.resetDay(day);
               Navigator.pop(context);
             },
-            child: Text(l10n.reset, style: const TextStyle(color: Colors.red)),
+            child: Text(
+              l10n.reset,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TasbihCounter extends ConsumerWidget {
-  const _TasbihCounter();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsViewModelProvider);
-    final viewModel = ref.read(settingsViewModelProvider.notifier);
-    final l10n = AppLocalizations.of(context)!;
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.fingerprint),
-                const SizedBox(width: 8),
-                Text(
-                  settings.tasbihName ?? l10n.tasbihName,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 16),
-                  tooltip: l10n.edit,
-                  onPressed: () async {
-                    final controller = TextEditingController(
-                      text: settings.tasbihName,
-                    );
-                    final name = await showDialog<String>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text(l10n.tasbihName),
-                        content: TextField(
-                          controller: controller,
-                          decoration: InputDecoration(
-                            labelText: l10n.name,
-                            hintText: l10n.tasbihNameHint,
-                          ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text(l10n.cancel),
-                          ),
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.pop(context, controller.text),
-                            child: Text(l10n.save),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (name != null && name.isNotEmpty) {
-                      viewModel.updateTasbihName(name);
-                    }
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            GestureDetector(
-              onTap: viewModel.incrementTasbih,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 4,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '${settings.tasbihCount}',
-                  style: Theme.of(context).textTheme.displayMedium,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: viewModel.resetTasbih,
-              child: Text(l10n.reset),
-            ),
-          ],
-        ),
       ),
     );
   }

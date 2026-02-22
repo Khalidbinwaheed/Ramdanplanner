@@ -17,29 +17,17 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -54,9 +42,46 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCsdox9RzJ8My6kVFzASPM4JfUzpscYuuo',
-    appId: '1:227002185976:android:fbada92ee3da51b20fe30d',
+    appId: '1:227002185976:android:bc83ab211daa9aa30fe30d',
     messagingSenderId: '227002185976',
     projectId: 'ramadan-planner-khalid',
     storageBucket: 'ramadan-planner-khalid.firebasestorage.app',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCiEcuYzPUZ9Y4qGJInsyfLRWx9CwDIcXA',
+    appId: '1:227002185976:web:07c65b67d9db43400fe30d',
+    messagingSenderId: '227002185976',
+    projectId: 'ramadan-planner-khalid',
+    authDomain: 'ramadan-planner-khalid.firebaseapp.com',
+    storageBucket: 'ramadan-planner-khalid.firebasestorage.app',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCKCrpdUXwVv3N9DkjonGCncdS5_M3je9A',
+    appId: '1:227002185976:ios:7e2de1529f4809760fe30d',
+    messagingSenderId: '227002185976',
+    projectId: 'ramadan-planner-khalid',
+    storageBucket: 'ramadan-planner-khalid.firebasestorage.app',
+    iosBundleId: 'com.example.ramadanPlanner',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyCKCrpdUXwVv3N9DkjonGCncdS5_M3je9A',
+    appId: '1:227002185976:ios:7e2de1529f4809760fe30d',
+    messagingSenderId: '227002185976',
+    projectId: 'ramadan-planner-khalid',
+    storageBucket: 'ramadan-planner-khalid.firebasestorage.app',
+    iosBundleId: 'com.example.ramadanPlanner',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyCiEcuYzPUZ9Y4qGJInsyfLRWx9CwDIcXA',
+    appId: '1:227002185976:web:3afe6e350c312d2d0fe30d',
+    messagingSenderId: '227002185976',
+    projectId: 'ramadan-planner-khalid',
+    authDomain: 'ramadan-planner-khalid.firebaseapp.com',
+    storageBucket: 'ramadan-planner-khalid.firebasestorage.app',
+  );
+
 }

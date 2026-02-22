@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:ramadan_planner/features/settings/auth_screen.dart';
 import 'package:ramadan_planner/features/settings/settings_view_model.dart';
+import 'package:ramadan_planner/features/tasbeeh/tasbeeh_provider.dart';
 import 'package:ramadan_planner/features/planner/presentation/providers/planner_view_model.dart';
+import 'package:ramadan_planner/features/planner/data/models/settings_model.dart';
 import 'package:ramadan_planner/l10n/app_localizations.dart';
 import 'package:ramadan_planner/features/settings/about_screen.dart';
+import 'package:ramadan_planner/features/azan/widgets/azan_settings_card.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -15,10 +20,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _formKey = GlobalKey<FormState>();
-  bool _isSaving = false;
 
-  late TextEditingController _nameController;
-  late TextEditingController _cityController;
   late TextEditingController _latController;
   late TextEditingController _longController;
 
@@ -26,8 +28,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void initState() {
     super.initState();
     final settings = ref.read(settingsViewModelProvider);
-    _nameController = TextEditingController(text: settings.userName ?? '');
-    _cityController = TextEditingController(text: settings.city ?? '');
+
     _latController = TextEditingController(
       text: settings.latitude?.toString() ?? '',
     );
@@ -38,431 +39,511 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _cityController.dispose();
     _latController.dispose();
     _longController.dispose();
     super.dispose();
-  }
-
-  Future<void> _detectLocation() async {
-    final l10n = AppLocalizations.of(context)!;
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.locationDisabled)));
-      }
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.locationPermissionDenied)),
-          );
-        }
-        return;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.locationPermissionPermanent)),
-        );
-      }
-      return;
-    }
-
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.detectingLocation)));
-    }
-
-    try {
-      Position position = await Geolocator.getCurrentPosition();
-      setState(() {
-        _latController.text = position.latitude.toString();
-        _longController.text = position.longitude.toString();
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.locationError(e.toString()))),
-        );
-      }
-    }
-  }
-
-  Future<void> _saveSettings() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isSaving = true);
-
-      try {
-        final settings = ref.read(settingsViewModelProvider);
-
-        final newSettings = settings.copyWith(
-          userName: _nameController.text.trim().isEmpty
-              ? null
-              : _nameController.text.trim(),
-          city: _cityController.text,
-          latitude: double.tryParse(_latController.text),
-          longitude: double.tryParse(_longController.text),
-        );
-
-        await ref
-            .read(settingsViewModelProvider.notifier)
-            .updateSettings(newSettings);
-
-        if (mounted) {
-          final messenger = ScaffoldMessenger.of(context);
-          final l10n = AppLocalizations.of(context)!;
-          // Navigator.pop(context); // Removed: Settings is a tab, not a dialog
-          messenger.showSnackBar(SnackBar(content: Text(l10n.settingsSaved)));
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Error saving settings: $e')));
-        }
-      } finally {
-        if (mounted) setState(() => _isSaving = false);
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsViewModelProvider);
     final viewModel = ref.read(settingsViewModelProvider.notifier);
+    final adv = viewModel.advanced;
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A), // Deep dark background
+      backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
         title: Text(
           l10n.settings,
-          style: TextStyle(
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildLabel(l10n.name),
-            _buildTextField(
-              controller: _nameController,
-              hint: l10n.enterName,
-              highlight: true,
-            ),
-            const SizedBox(height: 16),
-
-            _buildLabel(l10n.city),
-            _buildTextField(controller: _cityController, hint: l10n.cityHint),
-            const SizedBox(height: 16),
-
-            Row(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLabel(l10n.latitude),
-                      _buildTextField(controller: _latController, hint: '0.00'),
-                    ],
+                _buildProfileSection(settings, adv, viewModel, l10n),
+                const SizedBox(height: 12),
+                _buildLocationSection(settings, viewModel, l10n),
+                const SizedBox(height: 12),
+                _buildAppearanceSection(settings, adv, viewModel, l10n),
+                const SizedBox(height: 12),
+                _buildNotificationSection(adv, viewModel, l10n),
+                const SizedBox(height: 12),
+                _buildDataSection(adv, viewModel, l10n),
+                const SizedBox(height: 12),
+                _buildAboutSection(context, l10n),
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSection(String title, IconData icon, List<Widget> children) {
+    return Padding(
+      padding: const EdgeInsets.all(0.0),
+      child: ExpansionTile(
+        key: PageStorageKey(title),
+        leading: Icon(icon, color: Colors.pinkAccent),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide.none,
+        ),
+        collapsedShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide.none,
+        ),
+        backgroundColor: const Color(0xFF1E293B),
+        collapsedBackgroundColor: const Color(0xFF1E293B),
+        childrenPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 8,
+        ),
+        iconColor: Colors.pinkAccent,
+        collapsedIconColor: Colors.white24,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildProfileSection(
+    ShellUserSettings settings,
+    AdvancedSettings adv,
+    SettingsViewModel viewModel,
+    AppLocalizations l10n,
+  ) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    return _buildSection(l10n.profile, Icons.person_outline, [
+      Row(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.pinkAccent.withValues(alpha: 0.1),
+            child: const Icon(Icons.person, color: Colors.pinkAccent, size: 30),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user?.displayName ?? settings.userName ?? l10n.guestUser,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLabel(l10n.longitude),
-                      _buildTextField(
-                        controller: _longController,
-                        hint: '0.00',
-                      ),
-                    ],
+                if (user?.email != null)
+                  Text(
+                    user!.email!,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 10,
+                    ),
+                  ),
+                Text(
+                  user == null ? 'Sign in to sync' : 'Cloud Sync Enabled',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-
-            // Detect Location Button
-            OutlinedButton.icon(
-              onPressed: _detectLocation,
-              icon: const Icon(Icons.pin_drop, color: Colors.pinkAccent),
-              label: Text(
-                l10n.detectMyLocation,
-                style: TextStyle(color: Theme.of(context).primaryColor),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Theme.of(context).primaryColor),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            _buildLabel(l10n.calculationMethod),
-            _buildDropdown<int>(
-              value: settings.calculationMethod,
-              items: [
-                DropdownMenuItem(
-                  value: 1,
-                  child: Text(l10n.calculationMethodKarachi),
-                ),
-                DropdownMenuItem(
-                  value: 2,
-                  child: Text(l10n.calculationMethodISNA),
-                ),
-                DropdownMenuItem(
-                  value: 3,
-                  child: Text(l10n.calculationMethodMWL),
-                ),
-                DropdownMenuItem(
-                  value: 4,
-                  child: Text(l10n.calculationMethodMakkah),
-                ),
-                DropdownMenuItem(
-                  value: 5,
-                  child: Text(l10n.calculationMethodEgypt),
-                ),
-              ],
-              onChanged: (val) {
-                if (val != null) viewModel.setCalculationMethod(val);
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildLabel(l10n.school),
-            _buildDropdown<int>(
-              value: settings.asrSchool,
-              items: [
-                DropdownMenuItem(value: 0, child: Text(l10n.schoolStandard)),
-                DropdownMenuItem(value: 1, child: Text(l10n.schoolHanafi)),
-              ],
-              onChanged: (val) {
-                if (val != null) viewModel.setAsrSchool(val);
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildLabel(l10n.language),
-            _buildDropdown<String>(
-              value: settings.language,
-              items: [
-                DropdownMenuItem(
-                  value: 'en',
-                  child: Text(l10n.languageEnglish),
-                ),
-                DropdownMenuItem(value: 'ar', child: Text(l10n.languageArabic)),
-                DropdownMenuItem(value: 'ur', child: Text(l10n.languageUrdu)),
-              ],
-              onChanged: (val) {
-                if (val != null) viewModel.setLanguage(val);
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildLabel(l10n.currency),
-            _buildDropdown<String>(
-              value: settings.currency,
-              items: const [
-                DropdownMenuItem(value: 'PKR', child: Text('PKR')),
-                DropdownMenuItem(value: 'USD', child: Text('USD')),
-                DropdownMenuItem(value: 'SAR', child: Text('SAR')),
-                DropdownMenuItem(value: 'EUR', child: Text('EUR')),
-                DropdownMenuItem(value: 'GBP', child: Text('GBP')),
-              ],
-              onChanged: (val) {
-                if (val != null) viewModel.setCurrency(val);
-              },
-            ),
-
-            const SizedBox(height: 32),
-
-            // Save Button
-            ElevatedButton(
-              onPressed: _isSaving ? null : _saveSettings,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              child: _isSaving
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
-                      ),
-                    )
-                  : Text(l10n.save),
-            ),
-
-            const SizedBox(height: 24),
-
-            // About App
-            ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-              tileColor: const Color(0xFF1E293B),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.info_outline,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              title: Text(
-                l10n.about,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              trailing: const Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.grey,
-                size: 16,
-              ),
-              onTap: () {
+          ),
+          TextButton(
+            onPressed: () {
+              if (user == null) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AboutScreen()),
+                  MaterialPageRoute(builder: (_) => const AuthScreen()),
                 );
-              },
+              } else {
+                FirebaseAuth.instance.signOut();
+              }
+            },
+            child: Text(
+              user == null ? 'Login' : 'Logout',
+              style: const TextStyle(color: Colors.pinkAccent),
             ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      const SizedBox(height: 8),
+    ]);
+  }
 
-            const SizedBox(height: 24),
-
-            // Reset Data
-            Center(
-              child: TextButton(
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text(l10n.resetAllDataTitle),
-                      content: Text(l10n.resetAllDataContent),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: Text(l10n.cancel),
-                        ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                          ),
-                          onPressed: () => Navigator.pop(context, true),
-                          child: Text(l10n.reset),
-                        ),
-                      ],
-                    ),
-                  );
-
-                  if (confirm == true) {
-                    await ref
-                        .read(plannerViewModelProvider.notifier)
-                        .resetAllData();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.allDataReset)),
-                      );
-                    }
-                  }
-                },
-                child: Text(
-                  l10n.resetAppData,
-                  style: const TextStyle(color: Colors.redAccent),
+  Widget _buildLocationSection(
+    ShellUserSettings settings,
+    SettingsViewModel viewModel,
+    AppLocalizations l10n,
+  ) {
+    return _buildSection(l10n.locationAndPrayer, Icons.location_on_outlined, [
+      const AzanSettingsCard(),
+      const SizedBox(height: 16),
+      Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSmallLabel(l10n.timeFormat),
+                _buildDropdown<bool>(
+                  value: viewModel.advanced.is24HourFormat,
+                  items: [
+                    DropdownMenuItem(value: false, child: Text(l10n.hour12)),
+                    DropdownMenuItem(value: true, child: Text(l10n.hour24)),
+                  ],
+                  onChanged: (v) => viewModel.setTimeFormat(v!),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSmallLabel(l10n.school),
+                _buildDropdown<int>(
+                  value: settings.asrSchool,
+                  items: [
+                    DropdownMenuItem(
+                      value: 0,
+                      child: Text(l10n.schoolStandard),
+                    ),
+                    DropdownMenuItem(value: 1, child: Text(l10n.schoolHanafi)),
+                  ],
+                  onChanged: (v) => viewModel.setAsrSchool(v!),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      _buildSmallLabel(l10n.calculationMethod),
+      _buildDropdown<int>(
+        value: settings.calculationMethod,
+        items: [
+          DropdownMenuItem(
+            value: 1,
+            child: Text(l10n.calculationMethodKarachi),
+          ),
+          DropdownMenuItem(value: 2, child: Text(l10n.calculationMethodISNA)),
+          DropdownMenuItem(value: 3, child: Text(l10n.calculationMethodMWL)),
+          DropdownMenuItem(value: 4, child: Text(l10n.calculationMethodMakkah)),
+          DropdownMenuItem(value: 5, child: Text(l10n.calculationMethodEgypt)),
+        ],
+        onChanged: (v) => viewModel.setCalculationMethod(v!),
+      ),
+      const SizedBox(height: 16),
+      SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: () => _detectLocation(context, l10n, viewModel),
+          icon: const Icon(Icons.gps_fixed, size: 18),
+          label: Text(l10n.autoDetectGps),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.pinkAccent,
+            side: const BorderSide(color: Colors.pinkAccent),
+          ),
         ),
       ),
-    );
+      const SizedBox(height: 8),
+    ]);
   }
 
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
-      child: Text(
-        text,
-        style: TextStyle(color: Colors.grey[400], fontSize: 14),
+  Widget _buildAppearanceSection(
+    ShellUserSettings settings,
+    AdvancedSettings adv,
+    SettingsViewModel viewModel,
+    AppLocalizations l10n,
+  ) {
+    return _buildSection(l10n.appearance, Icons.palette_outlined, [
+      _buildSmallLabel(l10n.appLanguage),
+      _buildDropdown<String>(
+        value: settings.language,
+        items: [
+          DropdownMenuItem(value: 'en', child: Text(l10n.languageEnglish)),
+          DropdownMenuItem(value: 'ar', child: Text(l10n.languageArabic)),
+          DropdownMenuItem(value: 'ur', child: Text(l10n.languageUrdu)),
+        ],
+        onChanged: (v) => viewModel.setLanguage(v!),
       ),
-    );
+      const SizedBox(height: 16),
+      _buildSmallLabel(l10n.currency),
+      _buildDropdown<String>(
+        value: settings.currency,
+        items: const [
+          DropdownMenuItem(value: 'PKR', child: Text('PKR (Pakistani Rupee)')),
+          DropdownMenuItem(value: 'USD', child: Text('USD (US Dollar)')),
+          DropdownMenuItem(value: 'AED', child: Text('AED (UAE Dirham)')),
+          DropdownMenuItem(value: 'SAR', child: Text('SAR (Saudi Riyal)')),
+          DropdownMenuItem(value: 'GBP', child: Text('GBP (British Pound)')),
+          DropdownMenuItem(value: 'EUR', child: Text('EUR (Euro)')),
+          DropdownMenuItem(value: 'INR', child: Text('INR (Indian Rupee)')),
+          DropdownMenuItem(value: 'BDT', child: Text('BDT (Bangladeshi Taka)')),
+        ],
+        onChanged: (v) => viewModel.setCurrency(v!),
+      ),
+      const SizedBox(height: 16),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            l10n.enableAnimations,
+            style: const TextStyle(color: Colors.white),
+          ),
+          Switch(
+            value: adv.animationsEnabled,
+            onChanged: (v) => viewModel.setAnimations(v),
+            activeThumbColor: Colors.pinkAccent,
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      _buildSmallLabel(l10n.fontScale(adv.fontSize.toStringAsFixed(1))),
+      Slider(
+        value: adv.fontSize,
+        min: 0.8,
+        max: 1.5,
+        divisions: 7,
+        activeColor: Colors.pinkAccent,
+        onChanged: (v) => viewModel.setFontSize(v),
+      ),
+      const SizedBox(height: 8),
+    ]);
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    bool highlight = false,
+  Widget _buildNotificationSection(
+    AdvancedSettings adv,
+    SettingsViewModel viewModel,
+    AppLocalizations l10n,
+  ) {
+    return _buildSection(l10n.notifications, Icons.notifications_none, [
+      _buildSmallLabel(l10n.reminderPreferences),
+      ...adv.notificationToggles.entries.map((e) {
+        String label;
+        switch (e.key) {
+          case 'quran':
+            label = l10n.notifQuran;
+            break;
+          case 'suhoor':
+            label = l10n.notifSuhoor;
+            break;
+          case 'iftar':
+            label = l10n.notifIftar;
+            break;
+          case 'taraweeh':
+            label = l10n.notifTaraweeh;
+            break;
+          case 'dua':
+            label = l10n.notifDua;
+            break;
+          case 'quote':
+            label = l10n.notifQuote;
+            break;
+          case 'weekly':
+            label = l10n.notifWeekly;
+            break;
+          default:
+            label = e.key;
+        }
+        return CheckboxListTile(
+          title: Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+          value: e.value,
+          onChanged: (v) => viewModel.setNotificationToggle(e.key, v!),
+          activeColor: Colors.pinkAccent,
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+        );
+      }),
+      const Divider(color: Colors.white10),
+      _buildSmallLabel(l10n.notificationStyle),
+      _buildDropdown<String>(
+        value: adv.notificationStyle,
+        items: [
+          DropdownMenuItem(
+            value: 'Standard',
+            child: Text(l10n.standardNotificationStyle),
+          ),
+          DropdownMenuItem(
+            value: 'Spiritual',
+            child: Text(l10n.spiritualNotificationStyle),
+          ),
+          DropdownMenuItem(
+            value: 'Minimal',
+            child: Text(l10n.minimalNotificationStyle),
+          ),
+        ],
+        onChanged: (v) => viewModel.setNotificationStyle(v!),
+      ),
+      const SizedBox(height: 8),
+    ]);
+  }
+
+  Widget _buildDataSection(
+    AdvancedSettings adv,
+    SettingsViewModel viewModel,
+    AppLocalizations l10n,
+  ) {
+    return _buildSection(l10n.dataAndPrivacy, Icons.security_outlined, [
+      _buildListTile(l10n.clearTasbeehHistory, Icons.history, () {
+        ref.read(tasbeehProvider.notifier).clearFullHistory();
+        _showToast(l10n.historyCleared);
+      }),
+      _buildListTile(
+        l10n.resetAppData,
+        Icons.refresh,
+        () => _confirmResetAll(context, viewModel, l10n),
+        isDestructive: true,
+      ),
+      _buildListTile(l10n.exportProgressPdf, Icons.share_outlined, () {
+        final entries = ref.read(plannerViewModelProvider).allEntries;
+        viewModel.exportData(entries);
+      }),
+      _buildListTile(
+        l10n.cloudBackup,
+        Icons.cloud_upload_outlined,
+        () => _showComingSoon(l10n, 'Cloud Sync'),
+      ),
+      _buildListTile(
+        l10n.appLock,
+        adv.appLockEnabled ? Icons.lock : Icons.lock_open,
+        () => _showAppLockDialog(context, viewModel, l10n, adv),
+        trailing: Switch(
+          value: adv.appLockEnabled,
+          onChanged: (v) => _showAppLockDialog(context, viewModel, l10n, adv),
+          activeThumbColor: Colors.pinkAccent,
+        ),
+      ),
+    ]);
+  }
+
+  Widget _buildAboutSection(BuildContext context, AppLocalizations l10n) {
+    return _buildSection(l10n.about, Icons.info_outline, [
+      _buildListTile(
+        l10n.about,
+        Icons.description_outlined,
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AboutScreen()),
+        ),
+      ),
+      _buildListTile(
+        l10n.rateApp,
+        Icons.star_outline,
+        () => _showComingSoon(l10n, l10n.rateApp),
+      ),
+      _buildListTile(
+        l10n.shareApp,
+        Icons.share_outlined,
+        () => _showComingSoon(l10n, l10n.shareApp),
+      ),
+      _buildListTile(
+        l10n.contactSupport,
+        Icons.mail_outline,
+        () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AboutScreen()),
+        ),
+      ),
+      const Divider(color: Colors.white10),
+      _buildListTile(
+        l10n.termsOfService,
+        Icons.gavel_outlined,
+        () => _showTextDialog(
+          context,
+          l10n.termsOfService,
+          l10n.termsOfServiceContent,
+        ),
+      ),
+      _buildListTile(
+        l10n.privacyPolicy,
+        Icons.privacy_tip_outlined,
+        () => _showTextDialog(
+          context,
+          l10n.privacyPolicy,
+          l10n.privacyPolicyContent,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Center(
+        child: Text(
+          'v1.5.0',
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.2),
+            fontSize: 10,
+          ),
+        ),
+      ),
+    ]);
+  }
+
+  Widget _buildListTile(
+    String title,
+    IconData icon,
+    VoidCallback onTap, {
+    bool isDestructive = false,
+    Widget? trailing,
   }) {
-    return TextFormField(
-      controller: controller,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[600]),
-        filled: true,
-        fillColor: const Color(0xFF1E293B),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isDestructive ? Colors.redAccent : Colors.white60,
+        size: 20,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: isDestructive ? Colors.redAccent : Colors.white70,
+          fontSize: 14,
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: highlight
-              ? BorderSide(color: Theme.of(context).primaryColor)
-              : BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+      ),
+      trailing:
+          trailing ??
+          const Icon(Icons.chevron_right, color: Colors.white10, size: 16),
+      onTap: onTap,
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+    );
+  }
+
+  Widget _buildSmallLabel(String text) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 8),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text.toUpperCase(),
+        style: const TextStyle(
+          color: Colors.white24,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
         ),
       ),
     );
@@ -474,9 +555,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     required Function(T?) onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(12),
       ),
       child: DropdownButtonHideUnderline(
@@ -485,11 +566,192 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           items: items,
           onChanged: onChanged,
           dropdownColor: const Color(0xFF1E293B),
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+          style: const TextStyle(color: Colors.white, fontSize: 14),
           isExpanded: true,
+          icon: const Icon(Icons.arrow_drop_down, color: Colors.white24),
         ),
       ),
+    );
+  }
+
+  Future<void> _detectLocation(
+    BuildContext context,
+    AppLocalizations l10n,
+    SettingsViewModel viewModel,
+  ) async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _showToast(l10n.locationDisabled);
+      return;
+    }
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return;
+      }
+    }
+    _showToast(l10n.detectingLocation);
+    try {
+      Position position = await Geolocator.getCurrentPosition();
+      setState(() {
+        _latController.text = position.latitude.toString();
+        _longController.text = position.longitude.toString();
+      });
+      viewModel.setLocation(position.latitude, position.longitude);
+      _showToast(l10n.gpsUpdated);
+    } catch (e) {
+      _showToast('Error: $e');
+    }
+  }
+
+  void _confirmResetAll(
+    BuildContext context,
+    SettingsViewModel viewModel,
+    AppLocalizations l10n,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: Text(
+          l10n.resetAllDataTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          l10n.resetAllDataContent,
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(plannerViewModelProvider.notifier).resetAllData();
+              Navigator.pop(ctx);
+              _showToast(l10n.allProgressReset);
+            },
+            child: Text(
+              l10n.reset,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAppLockDialog(
+    BuildContext context,
+    SettingsViewModel viewModel,
+    AppLocalizations l10n,
+    AdvancedSettings adv,
+  ) {
+    if (adv.appLockEnabled) {
+      // Disable
+      viewModel.setAppLock(false, null);
+      _showToast(l10n.appLockDisabledToast);
+      return;
+    }
+
+    final pin1Controller = TextEditingController();
+    final pin2Controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1F2937),
+        title: Text(
+          l10n.setPinTitle,
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: pin1Controller,
+              decoration: InputDecoration(
+                labelText: l10n.enterPin,
+                labelStyle: const TextStyle(color: Colors.pinkAccent),
+              ),
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              maxLength: 4,
+              style: const TextStyle(color: Colors.white),
+            ),
+            TextField(
+              controller: pin2Controller,
+              decoration: InputDecoration(
+                labelText: l10n.confirmPin,
+                labelStyle: const TextStyle(color: Colors.pinkAccent),
+              ),
+              keyboardType: TextInputType.number,
+              obscureText: true,
+              maxLength: 4,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              if (pin1Controller.text.length == 4 &&
+                  pin1Controller.text == pin2Controller.text) {
+                viewModel.setAppLock(true, pin1Controller.text);
+                Navigator.pop(ctx);
+                _showToast(l10n.appLockEnabledToast);
+              } else {
+                _showToast(l10n.pinMismatch);
+              }
+            },
+            child: Text(
+              l10n.save,
+              style: const TextStyle(color: Colors.pinkAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showComingSoon(AppLocalizations l10n, String feature) {
+    _showToast(l10n.comingSoon(feature));
+  }
+
+  void _showTextDialog(BuildContext context, String title, String content) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: Text(title, style: const TextStyle(color: Colors.white)),
+        content: SingleChildScrollView(
+          child: Text(
+            content,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Close',
+              style: TextStyle(color: Colors.pinkAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showToast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
     );
   }
 }

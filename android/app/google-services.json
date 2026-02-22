@@ -7,12 +7,33 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:227002185976:android:fbada92ee3da51b20fe30d",
+        "mobilesdk_app_id": "1:227002185976:android:bc83ab211daa9aa30fe30d",
         "android_client_info": {
-          "package_name": "com.example.ramadan_planner"
+          "package_name": "com.codecryptical.ramadanplanner"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "227002185976-47ga6tjejhmbim2gojfvgapjfd97341i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.codecryptical.ramadanplanner",
+            "certificate_hash": "58b3f481b799f74ab663c08c270449ab128a8110"
+          }
+        },
+        {
+          "client_id": "227002185976-u1dk4uevehnhg5o66ptejsmnbu5e98kj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.codecryptical.ramadanplanner",
+            "certificate_hash": "9bb6a811860394a9fe7e484ffa96873991c3640d"
+          }
+        },
+        {
+          "client_id": "227002185976-lm89o7rf372q8448tvfqop22cd3g13r1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCsdox9RzJ8My6kVFzASPM4JfUzpscYuuo"
@@ -20,7 +41,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "227002185976-lm89o7rf372q8448tvfqop22cd3g13r1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "227002185976-smogi0tm1gc8g4l17jeh41g3092hla95.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ramadanPlanner"
+              }
+            }
+          ]
         }
       }
     }

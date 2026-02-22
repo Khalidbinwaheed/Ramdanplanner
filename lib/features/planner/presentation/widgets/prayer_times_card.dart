@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:ramadan_planner/features/planner/presentation/providers/dashboard_providers.dart';
 import 'package:ramadan_planner/l10n/app_localizations.dart';
+import 'package:ramadan_planner/features/settings/settings_view_model.dart';
 
 class PrayerTimesCard extends ConsumerWidget {
   const PrayerTimesCard({super.key});
@@ -33,8 +34,12 @@ class PrayerTimesCard extends ConsumerWidget {
         data: (state) {
           final pt = state.prayerTimes;
           final weather = state.weather;
+          final is24h = ref
+              .watch(settingsViewModelProvider.notifier)
+              .advanced
+              .is24HourFormat;
 
-          final dateFormat = DateFormat('HH:mm');
+          final dateFormat = DateFormat(is24h ? 'HH:mm' : 'h:mm a');
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,

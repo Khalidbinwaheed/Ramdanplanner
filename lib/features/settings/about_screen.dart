@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ramadan_planner/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -71,7 +72,7 @@ class AboutScreen extends StatelessWidget {
                 ),
               ),
               child: Text(
-                '${l10n.version} 1.0.0',
+                '${l10n.version} 1.5.0',
                 style: TextStyle(
                   color: Theme.of(context).primaryColor,
                   fontWeight: FontWeight.w500,
@@ -86,6 +87,14 @@ class AboutScreen extends StatelessWidget {
               title: l10n.developer,
               content: 'Khalid Bin Waheed',
               icon: Icons.person_outline,
+              actions: [
+                _ContactAction(
+                  icon: Icons.language,
+                  onTap: () => _launchURL(
+                    'https://khalidbinwaheed.github.io/ikhalidbinwaheed/',
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 16),
@@ -96,6 +105,21 @@ class AboutScreen extends StatelessWidget {
               title: l10n.company,
               content: 'Code Cryptical IT Innovators',
               icon: Icons.business_outlined,
+              actions: [
+                _ContactAction(
+                  icon: Icons.phone,
+                  onTap: () => _launchURL('tel:+923481923575'),
+                ),
+                _ContactAction(
+                  icon: Icons.mail_outline,
+                  onTap: () =>
+                      _launchURL('mailto:codecrypticalitinnovators@gmail.com'),
+                ),
+                _ContactAction(
+                  icon: Icons.language,
+                  onTap: () => _launchURL('https://www.codecraftpk.com'),
+                ),
+              ],
             ),
 
             const SizedBox(height: 32),
@@ -135,6 +159,7 @@ class AboutScreen extends StatelessWidget {
     required String title,
     required String content,
     required IconData icon,
+    List<_ContactAction>? actions,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -143,43 +168,99 @@ class AboutScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: Theme.of(context).primaryColor, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  content,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Icon(
+                  icon,
+                  color: Theme.of(context).primaryColor,
+                  size: 24,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      content,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+          if (actions != null && actions.isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(color: Colors.white10),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: actions
+                  .map(
+                    (a) => Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: InkWell(
+                        onTap: a.onTap,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).primaryColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            a.icon,
+                            color: Theme.of(context).primaryColor,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) {
+      debugPrint('Could not launch $url');
+    }
+  }
+}
+
+class _ContactAction {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  _ContactAction({required this.icon, required this.onTap});
 }

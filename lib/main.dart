@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:ramadan_planner/firebase_options.dart';
 import 'package:ramadan_planner/core/theme/app_theme.dart';
 import 'package:ramadan_planner/features/planner/presentation/pages/main_scaffold.dart';
 import 'package:ramadan_planner/features/planner/data/models/settings_model.dart';
@@ -13,14 +15,28 @@ import 'package:ramadan_planner/l10n/app_localizations.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive
-  await Hive.initFlutter();
-  Hive.registerAdapter(ShellUserSettingsAdapter());
-  Hive.registerAdapter(DayEntryAdapter());
+  // Initialize Firebase first
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await Hive.openBox(AppConstants.settingsBox);
-  await Hive.openBox(AppConstants.plannerBox);
-  await Hive.openBox(AppConstants.cacheBox);
+  try {
+    // Initialize Hive
+    await Hive.initFlutter();
+    Hive.registerAdapter(ShellUserSettingsAdapter());
+    Hive.registerAdapter(DayEntryAdapter());
+
+    await Hive.openBox(AppConstants.settingsBox);
+    await Hive.openBox(AppConstants.plannerBox);
+    await Hive.openBox(AppConstants.cacheBox);
+  } catch (e) {
+    // If Hive fails (e.g. corrupted data), clear and retry
+    await Hive.deleteFromDisk();
+    await Hive.initFlutter();
+    Hive.registerAdapter(ShellUserSettingsAdapter());
+    Hive.registerAdapter(DayEntryAdapter());
+    await Hive.openBox(AppConstants.settingsBox);
+    await Hive.openBox(AppConstants.plannerBox);
+    await Hive.openBox(AppConstants.cacheBox);
+  }
 
   runApp(const ProviderScope(child: RamadanPlannerApp()));
 }
@@ -41,6 +57,7 @@ class _RamadanPlannerAppState extends ConsumerState<RamadanPlannerApp> {
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.dark,
       locale: Locale(settings.language),
       localizationsDelegates: const [
         AppLocalizations.delegate,
